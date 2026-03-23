@@ -1,5 +1,6 @@
 // Compile: gcc -O3 -march=native -Wall connect_four.c -o connect_four
 
+#include <limits.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -95,12 +96,54 @@ int is_win(uint64_t bitboard) {
 
 // ######### ENGINE #########
 
-int random_move(const Board* b) {
-  int valid[COLS];
-  int count = 0;
-  for (int col = 0; col < COLS; col++)
-    if (board_is_valid(b, col)) valid[count++] = col;
-  return valid[rand() % count];
+int minimax(Board* b, int depth, int maximizing_player) {
+  if (is_win(b->bitboard[(b->counter - 1) & 1])) {
+    return maximizing_player ? -1000 : 1000;
+  }
+  if (depth == 0 || b->counter == MAX_MOVES) {
+    return 0;
+  }
+
+  if (maximizing_player) {
+    int max_eval = INT_MIN;
+    for (int col = 0; col < COLS; col++) {
+      if (board_is_valid(b, col)) {
+        board_make_move(b, col);
+        int eval = minimax(b, depth - 1, 0);
+        board_undo_move(b);
+        if (eval > max_eval) max_eval = eval;
+      }
+    }
+    return max_eval;
+  } else {
+    int min_eval = INT_MAX;
+    for (int col = 0; col < COLS; col++) {
+      if (board_is_valid(b, col)) {
+        board_make_move(b, col);
+        int eval = minimax(b, depth - 1, 1);
+        board_undo_move(b);
+        if (eval < min_eval) min_eval = eval;
+      }
+    }
+    return min_eval;
+  }
+}
+
+int best_move(Board* b, int depth) {
+  int best_col = -1;
+  int best_score = INT_MIN;
+  for (int col = 0; col < COLS; col++) {
+    if (board_is_valid(b, col)) {
+      board_make_move(b, col);
+      int score = minimax(b, depth - 1, 0);
+      board_undo_move(b);
+      if (score > best_score) {
+        best_score = score;
+        best_col = col;
+      }
+    }
+  }
+  return best_col;
 }
 
 int main(void) {
@@ -136,7 +179,7 @@ int main(void) {
       }
     } else {
       // AI's turn
-      col = random_move(&b);
+      col = best_move(&b, 6);
       printf("AI played: %d\n", col);
     }
 
