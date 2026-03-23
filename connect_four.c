@@ -120,7 +120,7 @@ int best_move(Board* b, int depth) {
       board_make_move(b, col);
       int score = -negamax(b, depth - 1);
       board_undo_move(b);
-      if (score > best_score) {
+      if (score >= best_score) {
         best_score = score;
         best_col = col;
       }
