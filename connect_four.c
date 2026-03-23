@@ -96,17 +96,16 @@ int is_win(uint64_t bitboard) {
 // ######### ENGINE #########
 
 int negamax(Board* b, int depth) {
-  if (is_win(b->bitboard[(b->counter - 1) & 1])) return -1;
+  if (is_win(b->bitboard[(b->counter - 1) & 1])) return -depth - 1;
   if (depth == 0 || b->counter == MAX_MOVES) return 0;
-  
-  int best = -1;
+
+  int best = -(DEPTH + 1);
   for (int col = 0; col < COLS; col++) {
     if (board_is_valid(b, col)) {
       board_make_move(b, col);
       int score = -negamax(b, depth - 1);
       board_undo_move(b);
       if (score > best) best = score;
-      if (best == 1) break;
     }
   }
   return best;
@@ -114,13 +113,13 @@ int negamax(Board* b, int depth) {
 
 int best_move(Board* b, int depth) {
   int best_col = -1;
-  int best_score = -1;
+  int best_score = -(DEPTH + 2);
   for (int col = 0; col < COLS; col++) {
     if (board_is_valid(b, col)) {
       board_make_move(b, col);
       int score = -negamax(b, depth - 1);
       board_undo_move(b);
-      if (score >= best_score) {
+      if (score > best_score) {
         best_score = score;
         best_col = col;
       }
