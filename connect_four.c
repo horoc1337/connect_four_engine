@@ -1,6 +1,5 @@
 // Compile: gcc -O3 -march=native -Wall connect_four.c -o connect_four
 
-#include <limits.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -14,6 +13,7 @@
 #define COLS 7
 #define ROWS 6
 #define MAX_MOVES (COLS * ROWS)
+#define DEPTH 5
 
 /* Overview of bitboard
 
@@ -96,46 +96,30 @@ int is_win(uint64_t bitboard) {
 
 // ######### ENGINE #########
 
-int minimax(Board* b, int depth, int maximizing_player) {
-  if (is_win(b->bitboard[(b->counter - 1) & 1])) {
-    return maximizing_player ? -1000 : 1000;
-  }
-  if (depth == 0 || b->counter == MAX_MOVES) {
-    return 0;
-  }
-
-  if (maximizing_player) {
-    int max_eval = INT_MIN;
-    for (int col = 0; col < COLS; col++) {
-      if (board_is_valid(b, col)) {
-        board_make_move(b, col);
-        int eval = minimax(b, depth - 1, 0);
-        board_undo_move(b);
-        if (eval > max_eval) max_eval = eval;
-      }
+int negamax(Board* b, int depth) {
+  if (is_win(b->bitboard[(b->counter - 1) & 1])) return -1;
+  if (depth == 0 || b->counter == MAX_MOVES) return 0;
+  
+  int best = -1;
+  for (int col = 0; col < COLS; col++) {
+    if (board_is_valid(b, col)) {
+      board_make_move(b, col);
+      int score = -negamax(b, depth - 1);
+      board_undo_move(b);
+      if (score > best) best = score;
+      if (best == 1) break;
     }
-    return max_eval;
-  } else {
-    int min_eval = INT_MAX;
-    for (int col = 0; col < COLS; col++) {
-      if (board_is_valid(b, col)) {
-        board_make_move(b, col);
-        int eval = minimax(b, depth - 1, 1);
-        board_undo_move(b);
-        if (eval < min_eval) min_eval = eval;
-      }
-    }
-    return min_eval;
   }
+  return best;
 }
 
 int best_move(Board* b, int depth) {
   int best_col = -1;
-  int best_score = INT_MIN;
+  int best_score = -1;
   for (int col = 0; col < COLS; col++) {
     if (board_is_valid(b, col)) {
       board_make_move(b, col);
-      int score = minimax(b, depth - 1, 0);
+      int score = -negamax(b, depth - 1);
       board_undo_move(b);
       if (score > best_score) {
         best_score = score;
@@ -179,7 +163,7 @@ int main(void) {
       }
     } else {
       // AI's turn
-      col = best_move(&b, 6);
+      col = best_move(&b, DEPTH);
       printf("AI played: %d\n", col);
     }
 
