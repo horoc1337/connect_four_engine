@@ -4,7 +4,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <time.h>
 
 #define RED "\x1b[31m"
 #define YELLOW "\x1b[33m"
@@ -131,7 +130,6 @@ int best_move(Board* b, int depth) {
 }
 
 int main(void) {
-  srand(time(NULL));
   Board b = board_init();
 
   printf("Who goes first? (0 = You, 1 = AI): ");
